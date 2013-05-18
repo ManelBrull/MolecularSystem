@@ -1,11 +1,8 @@
 package chalmers.manel.jps.agents;
 
-import jade.core.Agent;
 import java.util.Random;
 
 import chalmers.manel.jps.render.ManagerEnviroment;
-import jade.core.behaviours.TickerBehaviour;
-import jade.core.behaviours.WakerBehaviour;
 /**
  * Public class for my particles
  * Init is only called one time
@@ -13,27 +10,41 @@ import jade.core.behaviours.WakerBehaviour;
  * @author Manel Brull
  *
  */
-public abstract class basicParticle extends Agent {
-	
+public abstract class BasicMolecule extends Thread {
+	//Identifier of the agent. Needed to communicate with the render
+	protected int id;
+	//Update time
+	protected long initialDelay;
+	protected long updateDelay;
+	//Position of the molecule
 	protected float xPos;
 	protected float yPos;
-	
-	protected void setup(){
-		addBehaviour(new WakerBehaviour(this, 3000) {
-			protected void handleElapsedTimeout() {
-				init();
-				addBehaviour();
-			}
-		});
+	/**
+	 * 
+	 * @param number Identifier of the molecule. It should be unique
+	 * @param timer Milisecons before init
+	 * @param cycle Update time in miliseconds
+	 */
+	public BasicMolecule(int number, long timer, long cycle){
+		this.id = number;
+		this.initialDelay = timer;
+		this.updateDelay = cycle;
 	}
 	
-	private void addBehaviour(){
-		addBehaviour(new TickerBehaviour(this, 10){
-			@Override
-			protected void onTick() {
+	public void run(){
+		try {
+			sleep(this.initialDelay);
+			init();
+			sendPositionToEnviroment();
+			while(true){
+				sleep(this.updateDelay);
 				update();
+				sendPositionToEnviroment();
 			}
-		});
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	/**
 	 * Autogenerate a valid position
@@ -60,6 +71,11 @@ public abstract class basicParticle extends Agent {
 		int x = (int) (xPos/ManagerEnviroment.myMap.getSizeTile());
 		int y = (int) (yPos/ManagerEnviroment.myMap.getSizeTile());
 		return !ManagerEnviroment.myMap.getCanWalk(x, y);
+	}
+	
+	protected void sendPositionToEnviroment(){
+		ManagerEnviroment.xPosAgent[this.id] = xPos;
+		ManagerEnviroment.yPosAgent[this.id] = yPos;
 	}
 	
 	/**

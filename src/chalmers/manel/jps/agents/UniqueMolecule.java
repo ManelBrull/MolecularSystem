@@ -1,21 +1,21 @@
 package chalmers.manel.jps.agents;
 
 import chalmers.manel.jps.render.ManagerEnviroment;
-import jade.core.Agent;
-import jade.core.behaviours.TickerBehaviour;
-import jade.core.behaviours.WakerBehaviour;
 
-public class particle extends basicParticle {
+public class UniqueMolecule extends BasicMolecule {
 	
+	public UniqueMolecule(int number, long timer, long cycle) {
+		super(number, timer, cycle);
+		// TODO Auto-generated constructor stub
+	}
+
 	protected float northXPos;
 	protected float northYPos;
 	
 	protected float objXPos;
 	protected float objYPos;
-	
-	protected void setup(){
-		super.setup();
-	}
+
+	protected float size = 8.0f;
 	
 	@Override
 	protected void init(){
@@ -25,19 +25,19 @@ public class particle extends basicParticle {
 		this.yPos = posi[1];
 		
 		this.northXPos = posi[0];
-		this.northYPos = posi[1]-16.0f;
+		this.northYPos = posi[1]-size/2;
 		
 		//This shall be deleted in the future
-		ManagerEnviroment.xPosAgent[0] = posi[0];
-		ManagerEnviroment.yPosAgent[0] = posi[1];
-		ManagerEnviroment.sizeAgent[0] = 32.0f;
+		xPos = posi[0];
+		yPos = posi[1];
+		ManagerEnviroment.sizeAgent[this.id] = size;
 	}
 	
 	@Override
 	protected void update(){
 //		rotate(1);
-		float xMov = (northXPos-xPos)/16.0f;
-		float yMov = (northYPos-yPos)/16.0f;
+		float xMov = (northXPos-xPos)/(size/2);
+		float yMov = (northYPos-yPos)/(size/2);
 		
 		this.xPos += xMov;
 		this.yPos += yMov;
@@ -51,11 +51,8 @@ public class particle extends basicParticle {
 			this.xPos = posi[0];
 			this.yPos = posi[1];
 			this.northXPos = posi[0];
-			this.northYPos = posi[1]-16.0f;
+			this.northYPos = posi[1]-(size/2);
 		}
-		//That should be implemented in another method of basic Particle
-		ManagerEnviroment.xPosAgent[0] = xPos;
-		ManagerEnviroment.yPosAgent[0] = yPos;
 	}
 	
 	public void rotate(float angle){
