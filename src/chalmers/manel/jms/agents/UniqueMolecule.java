@@ -1,6 +1,6 @@
-package chalmers.manel.jps.agents;
+package chalmers.manel.jms.agents;
 
-import chalmers.manel.jps.render.ManagerEnviroment;
+import chalmers.manel.jms.render.ManagerEnviroment;
 
 public class UniqueMolecule extends BasicMolecule {
 	

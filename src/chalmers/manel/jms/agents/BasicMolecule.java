@@ -1,31 +1,36 @@
-package chalmers.manel.jps.agents;
+package chalmers.manel.jms.agents;
 
 import java.util.Random;
 
-import chalmers.manel.jps.render.ManagerEnviroment;
-
-public abstract class TenBasicMolecule extends Thread {
+import chalmers.manel.jms.render.ManagerEnviroment;
+/**
+ * Public class for my particles
+ * Init is only called one time
+ * Update is called every 10 ticks
+ * @author Manel Brull
+ *
+ */
+public abstract class BasicMolecule extends Thread {
 	//Identifier of the agent. Needed to communicate with the render
 	protected int id;
 	//Update time
 	protected long initialDelay;
 	protected long updateDelay;
 	//Position of the molecule
-	protected float[] xPos = new float[10];
-	protected float[] yPos = new float[10];
-
+	protected float xPos;
+	protected float yPos;
 	/**
 	 * 
-	 * @param number Identifier of the group of molecule.
+	 * @param number Identifier of the molecule. It should be unique
 	 * @param timer Milisecons before init
 	 * @param cycle Update time in miliseconds
 	 */
-	public TenBasicMolecule(int number, long timer, long cycle){
+	public BasicMolecule(int number, long timer, long cycle){
 		this.id = number;
 		this.initialDelay = timer;
 		this.updateDelay = cycle;
 	}
-
+	
 	public void run(){
 		try {
 			sleep(this.initialDelay);
@@ -62,33 +67,25 @@ public abstract class TenBasicMolecule extends Thread {
 		return ret;
 	}
 	
-	/**
-	 * Return if the number molecule reach the wall
-	 * 
-	 * @param number
-	 * @return
-	 */
-	protected boolean wallReached(int number){
-		int x = (int) (xPos[number]/ManagerEnviroment.myMap.getSizeTile());
-		int y = (int) (yPos[number]/ManagerEnviroment.myMap.getSizeTile());
+	protected boolean wallReached(){
+		int x = (int) (xPos/ManagerEnviroment.myMap.getSizeTile());
+		int y = (int) (yPos/ManagerEnviroment.myMap.getSizeTile());
 		return !ManagerEnviroment.myMap.getCanWalk(x, y);
 	}
-
+	
 	protected void sendPositionToEnviroment(){
-		for(int i = 0; i < 10; i++){
-			ManagerEnviroment.xPosAgent[this.id*10+i] = xPos[i];
-			ManagerEnviroment.yPosAgent[this.id*10+i] = yPos[i];
-		}
+		ManagerEnviroment.xPosAgent[this.id] = xPos;
+		ManagerEnviroment.yPosAgent[this.id] = yPos;
 	}
-
+	
 	/**
 	 * Initializes the particle 
 	 */
 	abstract protected void init();
-
+	
 	/**
 	 * Exectued every 10 ticks
 	 */
 	abstract protected void update();
-
+	
 }

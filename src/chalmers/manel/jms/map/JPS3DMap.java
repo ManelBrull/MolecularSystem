@@ -1,4 +1,4 @@
-package chalmers.manel.jps.map;
+package chalmers.manel.jms.map;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -14,9 +14,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import chalmers.manel.jps.exceptions.MapNotFoundInMapsInfoXML;
+import chalmers.manel.jms.exceptions.MapNotFoundInMapsInfoXML;
 
-public class JPSTileMap {
+public class JPS3DMap {
 
 	private int loadedMap; //number of the map
 
@@ -33,13 +33,13 @@ public class JPSTileMap {
 	private  int widthPixels;
 	private int heightPixels;
 	
-	public JPSTileMap(int map) throws MapNotFoundInMapsInfoXML{
+	public JPS3DMap(int map) throws MapNotFoundInMapsInfoXML{
 		this.loadedMap = map;
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder;
 			docBuilder = docBuilderFactory.newDocumentBuilder();
-			InputStream is = getClass().getClassLoader().getResourceAsStream("maps/info/mapsInfo.xml");
+			InputStream is = getClass().getClassLoader().getResourceAsStream("maps/twodimension/info/mapsInfo.xml");
 			Document doc = docBuilder.parse(is);
 			doc.getDocumentElement().normalize();
 			
@@ -105,7 +105,7 @@ public class JPSTileMap {
 
                 BufferedInputStream bisCanWalk = new BufferedInputStream(
                 		getClass().getClassLoader().getResourceAsStream(
-                				"maps/map_" + map + "/" + movementMapPath));
+                				"maps/twodimension/map_" + map + "/" + movementMapPath));
                 int l = bisCanWalk.read();
                 int pos = 0;
                 while(l != -1){
@@ -124,7 +124,7 @@ public class JPSTileMap {
                 String costMapPath = ((Node)textFNList.item(0)).getNodeValue().trim();
                 BufferedInputStream bisCostMap = new BufferedInputStream(
                 		getClass().getClassLoader().getResourceAsStream(
-                				"maps/map_" + map + "/" + costMapPath));
+                				"maps/twodimension/map_" + map + "/" + costMapPath));
                 int c = bisCostMap.read();
                 int cPos = 0;
                 while(c != -1){
@@ -145,7 +145,7 @@ public class JPSTileMap {
                 
                 BufferedInputStream bisRenderTiles = new BufferedInputStream(
                 		getClass().getClassLoader().getResourceAsStream(
-                				"maps/map_" + map + "/" + tileMapPath));
+                				"maps/twodimension/map_" + map + "/" + tileMapPath));
                 int t = bisRenderTiles.read();
                 int tPos = 0;
                 this.numTiles = -1;
@@ -235,3 +235,4 @@ public class JPSTileMap {
 		return row*this.widthTiles+col;
 	}
 }
+

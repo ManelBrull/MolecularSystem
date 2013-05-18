@@ -1,4 +1,4 @@
-package chalmers.manel.jps.render;
+package chalmers.manel.jms.render;
 
 import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
 import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
@@ -31,11 +31,10 @@ import javax.media.opengl.glu.GLU;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import chalmers.manel.jps.agents.BasicMolecule;
-import chalmers.manel.jps.agents.TenBasicMolecule;
-import chalmers.manel.jps.agents.TenUniqueMolecule;
-import chalmers.manel.jps.exceptions.MapNotFoundInMapsInfoXML;
-import chalmers.manel.jps.map.JPSTileMap;
+import chalmers.manel.jms.agents.TenBasicMolecule;
+import chalmers.manel.jms.agents.TenUniqueMolecule;
+import chalmers.manel.jms.exceptions.MapNotFoundInMapsInfoXML;
+import chalmers.manel.jms.map.JPSTileMap;
 
 import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.opengl.util.texture.Texture;
@@ -125,7 +124,7 @@ public class ManagerEnviroment implements GLEventListener {
 			
 			//Load map
 			this.myMap = new JPSTileMap(0);
-			this.loadSlices(drawable, "maps/map_0/", TextureIO.PNG);
+			this.loadSlices(drawable, "maps/twodimension/map_0/", TextureIO.PNG);
 
 			GL2 gl = drawable.getGL().getGL2();      // get the OpenGL graphics context
 			glu = new GLU();                         // get GL Utilities
