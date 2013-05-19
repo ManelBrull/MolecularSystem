@@ -31,8 +31,8 @@ import javax.media.opengl.glu.GLU;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import chalmers.manel.jms.agents.TenBasicMolecule;
-import chalmers.manel.jms.agents.TenUniqueMolecule;
+import chalmers.manel.jms.agents.twodimension.TenBasicMolecule;
+import chalmers.manel.jms.agents.twodimension.TenUniqueMolecule;
 import chalmers.manel.jms.exceptions.MapNotFoundInMapsInfoXML;
 import chalmers.manel.jms.map.JPSTileMap;
 

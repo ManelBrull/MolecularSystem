@@ -20,18 +20,22 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
 import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.glu.GLU;
+import javax.media.opengl.glu.GLUquadric;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import chalmers.manel.jms.agents.TenBasicMolecule3D;
-import chalmers.manel.jms.agents.TenSquareMolecule3D;
+import chalmers.manel.jms.agents.threedimension.TenBasicMolecule3D;
+import chalmers.manel.jms.agents.threedimension.TenSphereMolecule3D;
+import chalmers.manel.jms.agents.threedimension.TenSquareMolecule3D;
 import chalmers.manel.jms.map.JPSTileMap;
 
 import com.jogamp.opengl.util.FPSAnimator;
@@ -63,11 +67,11 @@ public class ManagerEnviroment3D implements GLEventListener {
 	
 	//Threads
 	private TenBasicMolecule3D molecules[] = null;
+	
 //  Textures
 	private Texture texture1;
 	private String textureFileName = "maps/threedimension/map_0/texture0.png";
 	private String textureFileType = TextureIO.PNG;
-	
 	
 	// Texture image flips vertically. Shall use TextureCoords class to retrieve the
 	// top, bottom, left and right coordinates.
@@ -114,14 +118,6 @@ public class ManagerEnviroment3D implements GLEventListener {
 
 	// Setup OpenGL Graphics Renderer
 	private GLU glu;  // for the GL Utility
-	// Rotational angle about the x, y and z axes in degrees
-	private static float angleX = 0.0f;
-	private static float angleY = 0.0f;
-	private static float angleZ = 0.0f;
-	// Rotational speed about x, y, z axes in degrees per refresh
-	private static float rotateSpeedX = 0.3f;
-	private static float rotateSpeedY = 0.2f;
-	private static float rotateSpeedZ = 0.4f;
 	// ------ Implement methods declared in GLEventListener ------
 
 	/**
@@ -130,12 +126,12 @@ public class ManagerEnviroment3D implements GLEventListener {
 	 */
 	@Override
 	public void init(GLAutoDrawable drawable) {
-		numMolecules = 10000;
+		numMolecules = 1000;
 		xPosMolecule = new float[numMolecules]; 
 		yPosMolecule = new float[numMolecules];
 		zPosMolecule = new float[numMolecules];
 		sizeMolecule = new float[numMolecules];
-		molecules = new TenSquareMolecule3D[numMolecules/10];
+		molecules = new TenBasicMolecule3D[numMolecules/10];
 
 		GL2 gl = drawable.getGL().getGL2();      // get the OpenGL graphics context
 		glu = new GLU();                         // get GL Utilities
@@ -193,7 +189,7 @@ public class ManagerEnviroment3D implements GLEventListener {
 	      // Setup perspective projection, with aspect ratio matches viewport
 	      gl.glMatrixMode(GL_PROJECTION);  // choose projection matrix
 	      gl.glLoadIdentity();             // reset projection matrix
-	      glu.gluPerspective(45.0, aspect, 0.1, 100.0); // fovy, aspect, zNear, zFar
+	      glu.gluPerspective(45.0, aspect, 0.1, 300.0); // fovy, aspect, zNear, zFar
 
 	      // Enable the model-view transform
 	      gl.glMatrixMode(GL_MODELVIEW);
@@ -205,90 +201,33 @@ public class ManagerEnviroment3D implements GLEventListener {
 	 */
 	@Override
 	public void display(GLAutoDrawable drawable) {
-	     GL2 gl = drawable.getGL().getGL2();  // get the OpenGL 2 graphics context
-	      gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear color and depth buffers
+		GL2 gl = drawable.getGL().getGL2();  // get the OpenGL 2 graphics context
+		gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear color and depth buffers
 
-	      // ------ Render a Cube with texture ------
-	      for(int i = 0; i < numMolecules; i++){
-	    	  gl.glLoadIdentity();  // reset the model-view matrix
 
-	    	  // Enables this texture's target in the current GL context's state.
-	    	  texture1.enable(gl); 
-	    	  texture1.bind(gl);  
-	    	  gl.glBegin(GL_QUADS);
+		for(int i = 0; i < numMolecules; i++){
+			/*	if(molecules[(int)i/10] instanceof TenSphereMolecule3D){
+				// ------ Render a Sphere with texture ------
+				gl.glLoadIdentity();  // reset the model-view matrix
+				gl.glTranslatef(xPosMolecule[i], yPosMolecule[i], zPosMolecule[i]);
+				// Enables this texture's target in the current GL context's state.
+				texture1.enable(gl); 
+				texture1.bind(gl);
+		        GLUquadric earth = glu.gluNewQuadric();		        
+		        glu.gluQuadricDrawStyle(earth, GLU.GLU_FILL);
+		        glu.gluQuadricNormals(earth, GLU.GLU_FLAT);
+		        glu.gluQuadricOrientation(earth, GLU.GLU_OUTSIDE);
+		        glu.gluQuadricTexture(earth, true);
+		        final float radius = sizeMolecule[i];
+		        final int slices = 16;
+		        final int stacks = 16;
+		        glu.gluSphere(earth, radius, slices, stacks);		        
+		    }*/
 
-	    	  float halfSize = sizeMolecule[i]/2;
-	    	  float xPosMinus1 = xPosMolecule[i]-halfSize;
-	    	  float xPosPlus1 = xPosMolecule[i]+halfSize;
-	    	  
-	    	  float yPosMinus1 = yPosMolecule[i]-halfSize;
-	    	  float yPosPlus1 = yPosMolecule[i]+halfSize;
-	    	  
-	    	  float zPosMinus1 = zPosMolecule[i]-halfSize;
-	    	  float zPosPlus1 = zPosMolecule[i]+halfSize;
-	    	  
-	    	  // Front Face
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, 1.0f); // bottom-left of the texture and quad
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, 1.0f);  // bottom-right of the texture and quad
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, 1.0f);   // top-right of the texture and quad
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, 1.0f);  // top-left of the texture and quad
-
-	    	  // Back Face
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, -1.0f);
-
-	    	  // Top Face
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, -1.0f);
-
-	    	  // Bottom Face
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, 1.0f);
-
-	    	  // Right face
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosPlus1, 1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosPlus1, -1.0f, 1.0f);
-
-	    	  // Left Face
-	    	  gl.glTexCoord2f(textureLeft, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, -1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureBottom);
-	    	  gl.glVertex3f(xPosMinus1, -1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureRight, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, 1.0f);
-	    	  gl.glTexCoord2f(textureLeft, textureTop);
-	    	  gl.glVertex3f(xPosMinus1, 1.0f, -1.0f);
-
-	    	  gl.glEnd();
-	      }
+			if(molecules[(int)i/10] instanceof TenSquareMolecule3D){
+				renderSquareMolecule(i, gl);
+			}
+		}
 	}
 
 	/** 
@@ -297,36 +236,99 @@ public class ManagerEnviroment3D implements GLEventListener {
 	@Override
 	public void dispose(GLAutoDrawable drawable) { }
 	
-	/**
-	 * Method for loading slices
-	 */
-//	private void loadSlices(GLAutoDrawable drawable, String path, String textureFileType){
-//		GL2 gl = drawable.getGL().getGL2();
-//		System.out.println("Num tiles in loadSlices: " + this.myMap.getNumTiles());
-//		int num = this.myMap.getNumTiles()+2;
-//		this.texture = new Texture[num];
-//		for(int i = 0; i < num; i++){
-//			InputStream is = getClass().getClassLoader().getResourceAsStream(path+"tile"+i+"."+textureFileType);
-//			try {
-//				this.texture[i] = TextureIO.newTexture(is, false, textureFileType);
-//				// Use linear filter for texture if image is larger than the original texture
-//				gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//				// Use linear filter for texture if image is smaller than the original texture
-//				gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//			} catch (GLException | IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
-//	}
+	private void renderSquareMolecule(int mol, GL2 gl){
+		gl.glLoadIdentity();  // reset the model-view matrix
+		// Enables this texture's target in the current GL context's state.
+		texture1.enable(gl); 
+		texture1.bind(gl);  
+		gl.glBegin(GL_QUADS);
+
+		float halfSize = sizeMolecule[mol]/2;
+		float xPosMinus1 = xPosMolecule[mol]-halfSize;
+		float xPosPlus1 = xPosMolecule[mol]+halfSize;
+
+		float yPosMinus1 = yPosMolecule[mol]-halfSize;
+		float yPosPlus1 = yPosMolecule[mol]+halfSize;
+
+		float zPosMinus1 = zPosMolecule[mol]-halfSize;
+		float zPosPlus1 = zPosMolecule[mol]+halfSize;
+
+		// Front Face
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1); // bottom-left of the texture and quad
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);  // bottom-right of the texture and quad
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);   // top-right of the texture and quad
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);  // top-left of the texture and quad
+
+		// Back Face
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
+
+		// Top Face
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosMinus1);
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosMinus1);
+
+		// Bottom Face
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1);
+
+		// Right face
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosMinus1);
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);
+
+		// Left Face
+		gl.glTexCoord2f(textureLeft, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
+		gl.glTexCoord2f(textureRight, textureBottom);
+		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1);
+		gl.glTexCoord2f(textureRight, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
+		gl.glTexCoord2f(textureLeft, textureTop);
+		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosMinus1);
+
+		gl.glEnd();
+	}
+
 	/**
 	 * Initialize thread molecules
 	 */
 	private void initMolecules(){
+		Random rnd = new Random();
 		for(int i = 0; i < numMolecules/10; i++){
-			molecules[i] = new TenSquareMolecule3D(i, 100*i, 20);
+			if(rnd.nextFloat() > 0.5f)
+				molecules[i] = new TenSquareMolecule3D(i, 100*i, 20);
+			else
+				molecules[i] = new TenSquareMolecule3D(i, 100*i, 20);
 			molecules[i].start();
 		}
+		
 	}
 	
 }

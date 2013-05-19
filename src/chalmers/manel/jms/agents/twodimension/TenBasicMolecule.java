@@ -1,11 +1,10 @@
-package chalmers.manel.jms.agents;
+package chalmers.manel.jms.agents.twodimension;
 
 import java.util.Random;
 
 import chalmers.manel.jms.render.ManagerEnviroment;
-import chalmers.manel.jms.render.ManagerEnviroment3D;
 
-public abstract class TenBasicMolecule3D extends Thread {
+public abstract class TenBasicMolecule extends Thread {
 	//Identifier of the agent. Needed to communicate with the render
 	protected int id;
 	//Update time
@@ -14,7 +13,6 @@ public abstract class TenBasicMolecule3D extends Thread {
 	//Position of the molecule
 	protected float[] xPos = new float[10];
 	protected float[] yPos = new float[10];
-	protected float[] zPos = new float[10];
 
 	/**
 	 * 
@@ -22,7 +20,7 @@ public abstract class TenBasicMolecule3D extends Thread {
 	 * @param timer Milisecons before init
 	 * @param cycle Update time in miliseconds
 	 */
-	public TenBasicMolecule3D(int number, long timer, long cycle){
+	public TenBasicMolecule(int number, long timer, long cycle){
 		this.id = number;
 		this.initialDelay = timer;
 		this.updateDelay = cycle;
@@ -51,14 +49,16 @@ public abstract class TenBasicMolecule3D extends Thread {
 	 * @return
 	 */
 	protected float[] validInitialPosition(){
-		float[] ret = new float[3];
+		float[] ret = new float[2];
 		Random rnd = new Random();
-		float x = Math.abs(rnd.nextFloat());
-		float y = Math.abs(rnd.nextFloat());
-		float z = Math.abs(rnd.nextFloat());
+		float x = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getWidthPixels();
+		float y = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getHeightPixels();
+		while(!ManagerEnviroment.myMap.getCanWalkPixels(x, y)){
+			x = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getWidthPixels();
+			y = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getHeightPixels();
+		}
 		ret[0] = x;
 		ret[1] = y;
-		ret[2] = z;
 		return ret;
 	}
 	
@@ -69,14 +69,15 @@ public abstract class TenBasicMolecule3D extends Thread {
 	 * @return
 	 */
 	protected boolean wallReached(int number){
-		return false;
+		int x = (int) (xPos[number]/ManagerEnviroment.myMap.getSizeTile());
+		int y = (int) (yPos[number]/ManagerEnviroment.myMap.getSizeTile());
+		return !ManagerEnviroment.myMap.getCanWalk(x, y);
 	}
 
 	protected void sendPositionToEnviroment(){
 		for(int i = 0; i < 10; i++){
-			ManagerEnviroment3D.xPosMolecule[this.id*10+i] = xPos[i];
-			ManagerEnviroment3D.yPosMolecule[this.id*10+i] = yPos[i];
-			ManagerEnviroment3D.zPosMolecule[this.id*10+i] = zPos[i];
+			ManagerEnviroment.xPosAgent[this.id*10+i] = xPos[i];
+			ManagerEnviroment.yPosAgent[this.id*10+i] = yPos[i];
 		}
 	}
 

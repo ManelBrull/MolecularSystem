@@ -1,18 +1,19 @@
-package chalmers.manel.jms.agents;
+package chalmers.manel.jms.agents.threedimension;
 
 import java.util.Random;
 
-import chalmers.manel.jms.render.ManagerEnviroment;
+import chalmers.manel.jms.render.ManagerEnviroment3D;
 
-public abstract class TenBasicMolecule extends Thread {
+public abstract class HundredBasicMolecule3D extends Thread {
 	//Identifier of the agent. Needed to communicate with the render
 	protected int id;
 	//Update time
 	protected long initialDelay;
 	protected long updateDelay;
 	//Position of the molecule
-	protected float[] xPos = new float[10];
-	protected float[] yPos = new float[10];
+	protected float[] xPos = new float[100];
+	protected float[] yPos = new float[100];
+	protected float[] zPos = new float[100];
 
 	/**
 	 * 
@@ -20,7 +21,7 @@ public abstract class TenBasicMolecule extends Thread {
 	 * @param timer Milisecons before init
 	 * @param cycle Update time in miliseconds
 	 */
-	public TenBasicMolecule(int number, long timer, long cycle){
+	public HundredBasicMolecule3D(int number, long timer, long cycle){
 		this.id = number;
 		this.initialDelay = timer;
 		this.updateDelay = cycle;
@@ -49,16 +50,23 @@ public abstract class TenBasicMolecule extends Thread {
 	 * @return
 	 */
 	protected float[] validInitialPosition(){
-		float[] ret = new float[2];
+		float[] ret = new float[3];
 		Random rnd = new Random();
-		float x = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getWidthPixels();
-		float y = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getHeightPixels();
-		while(!ManagerEnviroment.myMap.getCanWalkPixels(x, y)){
-			x = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getWidthPixels();
-			y = Math.abs(rnd.nextFloat())*ManagerEnviroment.myMap.getHeightPixels();
+		float x;
+		float y;
+		float z;
+		if(rnd.nextFloat() > 0.49f){
+			x = -rnd.nextFloat()*70;
+			y = -rnd.nextFloat()*70;
+			z = -rnd.nextFloat()*70;
+		} else {
+			x = rnd.nextFloat()*70;
+			y = rnd.nextFloat()*70;
+			z = rnd.nextFloat()*70;
 		}
 		ret[0] = x;
 		ret[1] = y;
+		ret[2] = z;
 		return ret;
 	}
 	
@@ -69,15 +77,14 @@ public abstract class TenBasicMolecule extends Thread {
 	 * @return
 	 */
 	protected boolean wallReached(int number){
-		int x = (int) (xPos[number]/ManagerEnviroment.myMap.getSizeTile());
-		int y = (int) (yPos[number]/ManagerEnviroment.myMap.getSizeTile());
-		return !ManagerEnviroment.myMap.getCanWalk(x, y);
+		return false;
 	}
 
 	protected void sendPositionToEnviroment(){
-		for(int i = 0; i < 10; i++){
-			ManagerEnviroment.xPosAgent[this.id*10+i] = xPos[i];
-			ManagerEnviroment.yPosAgent[this.id*10+i] = yPos[i];
+		for(int i = 0; i < 100; i++){
+			ManagerEnviroment3D.xPosMolecule[this.id*100+i] = xPos[i];
+			ManagerEnviroment3D.yPosMolecule[this.id*100+i] = yPos[i];
+			ManagerEnviroment3D.zPosMolecule[this.id*100+i] = zPos[i];
 		}
 	}
 
@@ -92,3 +99,4 @@ public abstract class TenBasicMolecule extends Thread {
 	abstract protected void update();
 
 }
+

@@ -1,4 +1,4 @@
-package chalmers.manel.jms.agents;
+package chalmers.manel.jms.agents.twodimension;
 
 import java.util.Random;
 
