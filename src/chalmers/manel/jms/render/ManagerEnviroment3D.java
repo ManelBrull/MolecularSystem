@@ -4,11 +4,7 @@ import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
 import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
 import static javax.media.opengl.GL.GL_DEPTH_TEST;
 import static javax.media.opengl.GL.GL_LEQUAL;
-import static javax.media.opengl.GL.GL_LINEAR;
 import static javax.media.opengl.GL.GL_NICEST;
-import static javax.media.opengl.GL.GL_TEXTURE_2D;
-import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
 import static javax.media.opengl.GL2.GL_QUADS;
 import static javax.media.opengl.GL2ES1.GL_PERSPECTIVE_CORRECTION_HINT;
 import static javax.media.opengl.fixedfunc.GLLightingFunc.GL_SMOOTH;
@@ -16,17 +12,15 @@ import static javax.media.opengl.fixedfunc.GLMatrixFunc.GL_MODELVIEW;
 import static javax.media.opengl.fixedfunc.GLMatrixFunc.GL_PROJECTION;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.Date;
 import java.util.Random;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLException;
 import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
@@ -38,10 +32,8 @@ import chalmers.manel.jms.agents.threedimension.TenSphereMolecule3D;
 import chalmers.manel.jms.agents.threedimension.TenSquareMolecule3D;
 import chalmers.manel.jms.map.JPSTileMap;
 
-import com.jogamp.opengl.util.FPSAnimator;
-import com.jogamp.opengl.util.texture.Texture;
-import com.jogamp.opengl.util.texture.TextureCoords;
-import com.jogamp.opengl.util.texture.TextureIO;
+import com.jogamp.opengl.util.Animator;
+import com.jogamp.opengl.util.awt.TextRenderer;
 
 @SuppressWarnings("serial")
 public class ManagerEnviroment3D implements GLEventListener {
@@ -49,7 +41,7 @@ public class ManagerEnviroment3D implements GLEventListener {
 	private static String TITLE = "3D Molecule Simulation";
 	private static int CANVAS_WIDTH = 800;  // width of the drawable
 	private static int CANVAS_HEIGHT = 600; // height of the drawable
-	private static final int FPS = 60; // animator's target frames per second
+//	private static final int FPS = 60; // animator's target frames per second
 
 //	private Texture[] texture; // Place to store the slices of the map
 //	private int tileSize = 64; // Size of the thile
@@ -68,15 +60,18 @@ public class ManagerEnviroment3D implements GLEventListener {
 	//Threads
 	private TenBasicMolecule3D molecules[] = null;
 	
-//  Textures
-	private Texture texture1;
-	private String textureFileName = "maps/threedimension/map_0/texture0.png";
-	private String textureFileType = TextureIO.PNG;
-	
-	// Texture image flips vertically. Shall use TextureCoords class to retrieve the
-	// top, bottom, left and right coordinates.
-	private float textureTop, textureBottom, textureLeft, textureRight;
+	//FPS
+	//  The number of frames
+	int frameCount = 0;
 
+	//  Number of frames per second
+	float fps = 0;
+
+	//  currentTime - previousTime is the time elapsed
+	//  between every call of the Idle function
+	long currentTime = 0;
+	long previousTime = 0;
+	
 	/** The entry main() method to setup the top-level container and animator */
 	public static void main(String args[]) {
 		// Run the GUI codes in the event-dispatching thread for thread safety
@@ -89,8 +84,8 @@ public class ManagerEnviroment3D implements GLEventListener {
 				canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 
 				// Create a animator that drives canvas' display() at the specified FPS. 
-				final FPSAnimator animator = new FPSAnimator(canvas, FPS, true);
-
+//				final FPSAnimator animator = new FPSAnimator(canvas, FPS, true);
+				final Animator animator = new Animator(canvas);
 				// Create the top-level container
 				final JFrame frame = new JFrame(); // Swing's JFrame or AWT's Frame
 				frame.getContentPane().add(canvas);
@@ -142,32 +137,6 @@ public class ManagerEnviroment3D implements GLEventListener {
 		gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // best perspective correction
 		gl.glShadeModel(GL_SMOOTH); // blends colors nicely, and smoothes out lighting
 
-		// Load texture from image
-
-		// Create a OpenGL Texture object from (URL, mipmap, file suffix)
-		// Use URL so that can read from JAR and disk file.
-
-		InputStream is = getClass().getClassLoader().getResourceAsStream(textureFileName);
-		try {
-			texture1 = TextureIO.newTexture(is, false, textureFileType);
-			// Use linear filter for texture if image is larger than the original texture
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			// Use linear filter for texture if image is smaller than the original texture
-			gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			// Texture image flips vertically. Shall use TextureCoords class to retrieve
-			// the top, bottom, left and right coordinates, instead of using 0.0f and 1.0f.
-			TextureCoords textureCoords = texture1.getImageTexCoords();
-			textureTop = textureCoords.top();
-			textureBottom = textureCoords.bottom();
-			textureLeft = textureCoords.left();
-			textureRight = textureCoords.right();
-		} catch (GLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		initMolecules();
 	}
 
@@ -203,26 +172,19 @@ public class ManagerEnviroment3D implements GLEventListener {
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();  // get the OpenGL 2 graphics context
 		gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear color and depth buffers
-
-
+		
+		calculateFPS();
+		//render text
+		TextRenderer txt = new TextRenderer(new Font("Tahoma", Font.BOLD, 25));
+		txt.beginRendering(CANVAS_WIDTH, CANVAS_HEIGHT); 
+		txt.setColor(1.0f, 0.0f, 0.0f, 0.8f); // Recuerda RGB son los tres primeros 
+		txt.draw("FPS: "+fps, 0, 0); // La cadena y la posicion 
+		txt.endRendering(); 
+		
 		for(int i = 0; i < numMolecules; i++){
-			/*	if(molecules[(int)i/10] instanceof TenSphereMolecule3D){
-				// ------ Render a Sphere with texture ------
-				gl.glLoadIdentity();  // reset the model-view matrix
-				gl.glTranslatef(xPosMolecule[i], yPosMolecule[i], zPosMolecule[i]);
-				// Enables this texture's target in the current GL context's state.
-				texture1.enable(gl); 
-				texture1.bind(gl);
-		        GLUquadric earth = glu.gluNewQuadric();		        
-		        glu.gluQuadricDrawStyle(earth, GLU.GLU_FILL);
-		        glu.gluQuadricNormals(earth, GLU.GLU_FLAT);
-		        glu.gluQuadricOrientation(earth, GLU.GLU_OUTSIDE);
-		        glu.gluQuadricTexture(earth, true);
-		        final float radius = sizeMolecule[i];
-		        final int slices = 16;
-		        final int stacks = 16;
-		        glu.gluSphere(earth, radius, slices, stacks);		        
-		    }*/
+			if(molecules[(int)i/10] instanceof TenSphereMolecule3D){
+			renderSphereMolecule(i, gl);	        
+		    }
 
 			if(molecules[(int)i/10] instanceof TenSquareMolecule3D){
 				renderSquareMolecule(i, gl);
@@ -236,11 +198,25 @@ public class ManagerEnviroment3D implements GLEventListener {
 	@Override
 	public void dispose(GLAutoDrawable drawable) { }
 	
+	private void renderSphereMolecule(int mol, GL2 gl){
+		// ------ Render a Sphere with texture ------
+		gl.glLoadIdentity();  // reset the model-view matrix
+		gl.glTranslatef(xPosMolecule[mol], yPosMolecule[mol], zPosMolecule[mol]);
+		// Enables this texture's target in the current GL context's state.
+        GLUquadric earth = glu.gluNewQuadric();		        
+        glu.gluQuadricDrawStyle(earth, GLU.GLU_FILL);
+        glu.gluQuadricNormals(earth, GLU.GLU_FLAT);
+        glu.gluQuadricOrientation(earth, GLU.GLU_OUTSIDE);
+        glu.gluQuadricTexture(earth, true);
+        final float radius = sizeMolecule[mol];
+        final int slices = 16;
+        final int stacks = 16;
+        glu.gluSphere(earth, radius, slices, stacks);	
+	}
+	
 	private void renderSquareMolecule(int mol, GL2 gl){
 		gl.glLoadIdentity();  // reset the model-view matrix
 		// Enables this texture's target in the current GL context's state.
-		texture1.enable(gl); 
-		texture1.bind(gl);  
 		gl.glBegin(GL_QUADS);
 
 		float halfSize = sizeMolecule[mol]/2;
@@ -252,65 +228,42 @@ public class ManagerEnviroment3D implements GLEventListener {
 
 		float zPosMinus1 = zPosMolecule[mol]-halfSize;
 		float zPosPlus1 = zPosMolecule[mol]+halfSize;
-
+		
+        gl.glColor3f(0.0f, 0.0f, 1.0f); // Blue
 		// Front Face
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1); // bottom-left of the texture and quad
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);  // bottom-right of the texture and quad
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);   // top-right of the texture and quad
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);  // top-left of the texture and quad
 
 		// Back Face
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
 
 		// Top Face
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosMinus1);
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosMinus1);
 
 		// Bottom Face
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1);
 
 		// Right face
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosMinus1);
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosMinus1);
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosPlus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosPlus1, yPosMinus1, zPosPlus1);
 
 		// Left Face
-		gl.glTexCoord2f(textureLeft, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosMinus1);
-		gl.glTexCoord2f(textureRight, textureBottom);
 		gl.glVertex3f(xPosMinus1, yPosMinus1, zPosPlus1);
-		gl.glTexCoord2f(textureRight, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosPlus1);
-		gl.glTexCoord2f(textureLeft, textureTop);
 		gl.glVertex3f(xPosMinus1, yPosPlus1, zPosMinus1);
 
 		gl.glEnd();
@@ -328,7 +281,31 @@ public class ManagerEnviroment3D implements GLEventListener {
 				molecules[i] = new TenSquareMolecule3D(i, 100*i, 20);
 			molecules[i].start();
 		}
-		
+	}
+	
+	private void calculateFPS(){
+	//  Increase frame count
+	    frameCount++;
+
+	    //  Get the number of milliseconds since glutInit called 
+	    //  (or first call to glutGet(GLUT ELAPSED TIME)).
+	    Date dt = new Date();
+	    currentTime = dt.getTime();
+
+	    //  Calculate time passed
+	    long timeInterval = currentTime - previousTime;
+
+	    if(timeInterval > 1000)
+	    {
+	        //  calculate the number of frames per second
+	        fps = frameCount / (timeInterval / 1000.0f);
+
+	        //  Set time
+	        previousTime = currentTime;
+
+	        //  Reset frame count
+	        frameCount = 0;
+	    }
 	}
 	
 }
