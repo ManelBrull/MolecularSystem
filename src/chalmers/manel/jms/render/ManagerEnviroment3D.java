@@ -15,9 +15,13 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.Date;
 import java.util.Random;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -32,43 +36,72 @@ import chalmers.manel.jms.agents.threedimension.TenSphereMolecule3D;
 import chalmers.manel.jms.agents.threedimension.TenSquareMolecule3D;
 import chalmers.manel.jms.map.JPSTileMap;
 
+import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.util.Animator;
 import com.jogamp.opengl.util.awt.TextRenderer;
 
 @SuppressWarnings("serial")
 public class ManagerEnviroment3D implements GLEventListener {
-	// Define constants for the top-level container
+
+	/**
+	 * Define constants for the top level container
+	 */
+	/** Title of the application	 **/
 	private static String TITLE = "3D Molecule Simulation";
-	private static int CANVAS_WIDTH = 800;  // width of the drawable
-	private static int CANVAS_HEIGHT = 600; // height of the drawable
-//	private static final int FPS = 60; // animator's target frames per second
-
-//	private Texture[] texture; // Place to store the slices of the map
-//	private int tileSize = 64; // Size of the thile
 	
-	public static JPSTileMap myMap; //Map with all the information about the map
+	/** Width of the canvas **/
+	private static int CANVAS_WIDTH = 800;  
 	
-	//Molecule variables
+	/** Height of the drawable **/
+	private static int CANVAS_HEIGHT = 600; 
+	
+	/**
+	 * Define constants of the enviroment
+	 */
+	/** Information abour the enviroment **/
+	public static JPSTileMap myMap; 
+	
+	/**
+	 * Define variables of the involved molecules
+	 */
+	/** Number of molecules **/
 	private int numMolecules = 0;
+	
+	/** Number of Vertex **/
+	private int numVertex = 0;
 
-	//Positions
+	/** X Position of the middle of the molecule **/
 	public static float[] xPosMolecule = null;
+	
+	/** Y Position of the middle of the molecule **/
 	public static float[] yPosMolecule = null;
+	
+	/** Z Position of the middle of the molecule **/
 	public static float[] zPosMolecule = null;
+	
+	/** Size of the molecule **/
 	public static float[] sizeMolecule = null;
 	
-	//Threads
+	/**
+	 * Framered buffer variables
+	 */
+	/** Index of vertex buffer object. We store interleaved vertex and color data here
+     * like this: x0, r0, y0, g0, z0, b0, x1, r1, y1, g1, z1, b1...
+     * Stored in an array because glGenBuffers requires it. */
+    protected int [] aiVertexBufferIndices = new int [] {-1};
+	
+	/** Threads to improve the efficiency of our app and controls molecules **/
 	private TenBasicMolecule3D molecules[] = null;
 	
-	//FPS
-	//  The number of frames
+	/**
+	 * FPS Counter
+	 */
+	/** number of frames **/
 	int frameCount = 0;
 
-	//  Number of frames per second
+	/** frames per second **/
 	float fps = 0;
 
-	//  currentTime - previousTime is the time elapsed
-	//  between every call of the Idle function
 	long currentTime = 0;
 	long previousTime = 0;
 	
@@ -121,7 +154,8 @@ public class ManagerEnviroment3D implements GLEventListener {
 	 */
 	@Override
 	public void init(GLAutoDrawable drawable) {
-		numMolecules = 1000;
+		numMolecules = 5000;
+		numVertex = numMolecules*4*6;
 		xPosMolecule = new float[numMolecules]; 
 		yPosMolecule = new float[numMolecules];
 		zPosMolecule = new float[numMolecules];
@@ -178,9 +212,27 @@ public class ManagerEnviroment3D implements GLEventListener {
 		TextRenderer txt = new TextRenderer(new Font("Tahoma", Font.BOLD, 25));
 		txt.beginRendering(CANVAS_WIDTH, CANVAS_HEIGHT); 
 		txt.setColor(1.0f, 0.0f, 0.0f, 0.8f); // Recuerda RGB son los tres primeros 
-		txt.draw("FPS: "+fps, 0, 0); // La cadena y la posicion 
+		txt.draw("FPS: "+fps, 400, 580); // La cadena y la posicion 
 		txt.endRendering(); 
+	/*	
+		//create vertex buffer
+		int [] aiNumOfVertices = createAndFillVertexBufferSquares(gl);
 		
+		gl.glBindBuffer(GL.GL_ARRAY_BUFFER, aiVertexBufferIndices[0]);
+		gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
+		gl.glEnableClientState(GL2.GL_COLOR_ARRAY);
+		gl.glVertexPointer( 3, GL.GL_FLOAT, 6 * Buffers.SIZEOF_FLOAT, 0 );
+        gl.glColorPointer( 3, GL.GL_FLOAT, 6 * Buffers.SIZEOF_FLOAT, 3 * Buffers.SIZEOF_FLOAT );
+        gl.glPolygonMode( GL.GL_FRONT, GL2.GL_FILL );
+        gl.glDrawArrays( GL2.GL_QUADS, 0, aiNumOfVertices[0] );
+		
+        // disable arrays once we're done
+        gl.glBindBuffer( GL.GL_ARRAY_BUFFER, 0 );
+        gl.glDisableClientState( GL2.GL_VERTEX_ARRAY );
+        gl.glDisableClientState( GL2.GL_COLOR_ARRAY );
+        gl.glDisable( GL2.GL_COLOR_MATERIAL );
+
+		/*
 		for(int i = 0; i < numMolecules; i++){
 			if(molecules[(int)i/10] instanceof TenSphereMolecule3D){
 			renderSphereMolecule(i, gl);	        
@@ -190,6 +242,7 @@ public class ManagerEnviroment3D implements GLEventListener {
 				renderSquareMolecule(i, gl);
 			}
 		}
+		*/
 	}
 
 	/** 
@@ -212,6 +265,233 @@ public class ManagerEnviroment3D implements GLEventListener {
         final int slices = 16;
         final int stacks = 16;
         glu.gluSphere(earth, radius, slices, stacks);	
+	}
+	
+	/**
+	 * Create and fill the vertex buffer for squares
+	 * @param gl
+	 * @return
+	 */
+	private int[] createAndFillVertexBufferSquares(GL2 gl){
+		
+		int [] aiNumOfVertices = new int[]{numVertex};
+		
+		if(aiVertexBufferIndices[0] == -1){
+			if(!gl.isFunctionAvailable("glGenBuffers")
+					||!gl.isFunctionAvailable("glBindBuffer")
+					||!gl.isFunctionAvailable("glBufferData")
+					||!gl.isFunctionAvailable("glDeleteBuffers")){
+				System.out.println("Error, vertex buffer not supported");
+			}
+			gl.glGenBuffers(1, aiVertexBufferIndices, 0);
+			
+			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, aiVertexBufferIndices[0]);
+			
+			gl.glBufferData(GL.GL_ARRAY_BUFFER, numVertex*3*2*Buffers.SIZEOF_FLOAT,
+					null, GL2.GL_DYNAMIC_DRAW);
+		}
+		gl.glBindBuffer( GL.GL_ARRAY_BUFFER, aiVertexBufferIndices[0]);
+		ByteBuffer byteBuffer = gl.glMapBuffer(GL.GL_ARRAY_BUFFER, GL2.GL_WRITE_ONLY);
+		FloatBuffer floatBuffer = byteBuffer.order(ByteOrder.nativeOrder()).asFloatBuffer();
+		
+		storeVerticesAndColors(floatBuffer);
+	    gl.glUnmapBuffer( GL.GL_ARRAY_BUFFER );
+	 
+	    return( aiNumOfVertices );
+	}
+	
+	private void storeVerticesAndColors(FloatBuffer floatBuffer){
+		for(int mol = 0; mol < numMolecules; mol++){
+			float []color = new float[3];
+			color[0] = 0.0f;
+			color[1] = 0.0f;
+			color[2] = 1.0f;
+			
+			float halfSize = sizeMolecule[mol]/2;
+			float xPosMinus1 = xPosMolecule[mol]-halfSize;
+			float xPosPlus1 = xPosMolecule[mol]+halfSize;
+
+			float yPosMinus1 = yPosMolecule[mol]-halfSize;
+			float yPosPlus1 = yPosMolecule[mol]+halfSize;
+
+			float zPosMinus1 = zPosMolecule[mol]-halfSize;
+			float zPosPlus1 = zPosMolecule[mol]+halfSize;
+
+			// Front Face
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			// Back Face
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			//Top Face
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			//Bottom Face
+	
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			//Right Face
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosPlus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			//Left Face
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosMinus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosPlus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+			
+			floatBuffer.put(xPosMinus1);
+			floatBuffer.put(yPosPlus1);
+			floatBuffer.put(zPosMinus1);
+			floatBuffer.put(color[0]);
+			floatBuffer.put(color[1]);
+			floatBuffer.put(color[2]);
+		}
 	}
 	
 	private void renderSquareMolecule(int mol, GL2 gl){

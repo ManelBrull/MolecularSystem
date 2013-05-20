@@ -5,7 +5,7 @@ import chalmers.manel.jms.render.ManagerEnviroment3D;
 public class TenSquareMolecule3D extends TenBasicMolecule3D {
 
 	//Size of the edge
-	protected float size = 4.0f;
+	protected float size = 1.0f;
 	
 	public TenSquareMolecule3D(int number, long timer, long cycle) {
 		super(number, timer, cycle);
